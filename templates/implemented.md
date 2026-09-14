@@ -1,14 +1,13 @@
-<!--
-  【维护提醒】
-  1. 现行法律契约：此文件在代码重构、改名或路径变更时，必须同批原子就地更新事实。
-  2. 源码物理绑定：请在受此决定保护的核心代码入口处标注：
-     // Note: <简述> — 见 .agents/notes/implemented/<class>/<filename>.md
-  3. 时态门禁：严禁出现 ## Proposal、## Plan、## Acceptance criteria 等计划态标题。
--->
-
 # Agent Note: <标题>
 
 Status: implemented
+
+<!--
+  【维护提醒】
+  1. 现行法律契约：代码重构、改名或路径变更时，同批就地更新事实。禁止把 Decision 改写成另一个决定。
+  2. 时态纪律：严禁 ## Proposal / ## Plan / ## Acceptance criteria 等计划态标题；Decision 用现在时（门禁只拒标题）。
+  3. 归档契约：只插 Archived: YYYY-MM-DD 紧邻 Status: implemented。互链写在新笔记，不写进归档篇。
+-->
 
 ## Problem
 
@@ -21,7 +20,7 @@ Status: implemented
 ## Alternatives considered
 
 - **<备选 A>** — <先写其最强论据，再写为何被否>
-- **<备选 B>** — <反稻草人设计，必须包含“不做/复用已有/标准库”考量>
+- **<备选 B>** — <先写其最强论据，再写为何被否。不做/复用仅当当时真的权衡过才写，不要编>
 
 ## Consequences
 

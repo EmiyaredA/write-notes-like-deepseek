@@ -22,7 +22,7 @@
 
 每条 Note 必带的语义要求（检查脚本管不了的）：
 
-- **Alternatives 里有"不做/复用"一档**：把"宁可不动、复用已有/标准库/平台能力"也列出来，说明为何最终取舍。被否项要写它的最强论据再否——只写弱处的拒绝是稻草人。
+- **Alternatives 只记录真实考虑过的对手方案**：先写它最强的论据再否——只写弱处的拒绝是稻草人。「不做/复用」仅当当时真的权衡过才写，不要编。
 - **简化必写代价上限**：`simplification` 的 `## Consequences` 要写明"这个取舍的已知上限是什么、什么信号发生时该重访"。没有升级触发条件的简化会悄悄变永久。
 - **验证要可确认**：写"改对了"时落到可被检查的表面（记"哪条路径、什么量级、跑什么命令确认"），没有基线就不要用相对量词——"提升了/更快了"在没有对比基线时是未验证断言，比不写更糟。
 
@@ -30,4 +30,4 @@
 
 `scripts/agent-note-tree.ts` 定义 `AGENT_NOTE_CLASSES` 常量；未知 class 文件夹、lifecycle 根下的散落 `.md` 都会报错。新增 class 必须同时改常量和本文档，否则检查直接红。
 
-详见 Harness 原文：`implemented/process/2026-06-20-agent-note-classification.md`。
+分类封闭集与判据对齐 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的 notes 分类实践。

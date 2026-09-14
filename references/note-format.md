@@ -43,7 +43,7 @@ Status: <状态>
 ## Consequences
 ```
 
-`Decision` 用现在时描述已落地事实；禁止出现 `## Proposal` / `## Plan` / `## Migration plan` / `## Acceptance criteria` 等提案口吻（检查会直接报错）；用 `## Consequences` 同时记录代价与收益；可按需加 `## Testing` / `## Verification` 等现在时事实节。
+`Decision` 用现在时描述已落地事实；门禁只拒提案标题（`## Proposal` / `## Plan` / `## Migration plan` / `## Acceptance criteria` 及其中文别名）；用 `## Consequences` 同时记录代价与收益；可按需加 `## Testing` / `## Verification` 等现在时事实节。现在时靠人写，不靠词法扫描。
 
 **`rejected/`**
 
@@ -51,14 +51,14 @@ Status: <状态>
 
 ## Alternatives considered（必写）
 
-每篇 Note 必含 `## Alternatives considered`：每个真考虑过的备选为何没选，一段一备选（可用 `### Why not <X>?` 子节）。没写就重审——不记录打败了什么，决定就会被重审。
-
-- 只有 2026-07-05 前且不可追溯的 pre-format Note 可用 `<!-- agent-note-format: alternatives-not-recorded (pre-format Agent Note) -->` 占位，其余一律实写。新项目可忽略此条。
+每篇 Note 必含 `## Alternatives considered`：每个**真考虑过**的备选为何没选，一段一备选（可用 `### Why not <X>?` 子节）。没有过的选项不要编。「不做 / 复用现状」仅当当时真的权衡过才写。脚本只检查这一节在不在。
 
 ## 时态与禁止改写
 
 - `proposed` 可用将来时；`implemented` 一律现在时，描述已落地事实。
 - 一条 Note 永远不被改写成另一个决定；被取代用新 Note 接管，旧 Note 按归档/合并规则处理。
+
+头块标题兼容全角冒号（`# Agent Note：标题`，中文输入法常打出全角）；新笔记建议半角。
 
 ## 自由节与文风
 
@@ -66,4 +66,4 @@ Status: <状态>
 - 保留可检索的机制名与 `must`/`may`/`never` 时序强调；一个事实只在一处讲透，其余链过去。
 - 跨 Note 引用用相对 Markdown 链接 `[topic](../../implemented/architecture/2026-…-….md)`，不要裸数字。
 
-来源：Harness `.agents/notes/README.md#the-file-format` 与 `implemented/process/2026-07-05-uniform-agent-note-format.md`（本项目中文单语，头块 `Agent Note:` 与 `Status:` 保持英文原文以便脚本核对，正文用中文）。
+格式与别名表对齐 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的 notes 规范；本项目为中文单语，头块 `Agent Note:` 与 `Status:` 保持英文原文以便脚本核对，正文用中文。

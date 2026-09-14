@@ -1092,7 +1092,14 @@ function renderBaseline() {
   document.getElementById('pillars-vault').innerHTML = pillars.map(n => {
     const cites = Core.inCount.get(n.id) || 0;
     const title = escapeHtml(n.title);
-    const desc = escapeHtml((n.decision || n.problem || '系统核心架构协议').replace(/<[^>]+>/g, ''));
+    const plain = (n.decision || n.problem || '系统核心架构协议')
+      .replace(/<[^>]+>/g, '')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/\[(.*?)\]\([^)]*\)/g, '$1')
+      .replace(/[*`>]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const desc = escapeHtml(plain);
     const safeCls = escapeHtml(n.cls);
     const clsLabel = escapeHtml(CLASS_LABELS[n.cls] || n.cls);
     const safeDate = escapeHtml(n.date || '进行中');
@@ -1276,7 +1283,12 @@ function renderAlternatives() {
     if (altContent) {
       const parts = altContent.split(/\n(?=###? |- )/);
       parts.forEach(p => {
-        const clean = p.replace(/^[-#* ]+/, '').trim();
+        const clean = p.replace(/^[-#* ]+/, '').trim()
+          .replace(/\*\*([^*]+)\*\*/g, '$1')
+          .replace(/\*\*/g, '')
+          .replace(/__([^_]+)__/g, '$1')
+          .replace(/`([^`]*)`/g, '$1')
+          .replace(/\[(.*?)\]\([^)]*\)/g, '$1');
         if (clean.length > 5) {
           const colonIdx = clean.indexOf('：') > -1 ? clean.indexOf('：') : clean.indexOf(':');
           let heading = clean.slice(0, 45);

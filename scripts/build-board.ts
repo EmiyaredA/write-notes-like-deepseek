@@ -64,7 +64,24 @@ if (!existsSync(notesDir)) {
   process.exit(1);
 }
 
+/** Blank out fenced code-block lines so `## ` headings and [](.md) links inside them are never parsed as note structure. */
+function stripFencedBlocks(raw: string): string {
+  let inFence = false;
+  return raw
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((l) => {
+      if (/^\s{0,3}```/.test(l)) {
+        inFence = !inFence;
+        return "";
+      }
+      return inFence ? "" : l;
+    })
+    .join("\n");
+}
+
 function parseNoteContent(raw: string, relPath: string, slugToId: Map<string, string>) {
+  const parseable = stripFencedBlocks(raw);
   const slug = relPath.split('/').pop()!.replace(/\.md$/, '');
   const parts = relPath.split('/');
   const lifecycle = parts[0];
@@ -77,12 +94,12 @@ function parseNoteContent(raw: string, relPath: string, slugToId: Map<string, st
   const dMatch = /^(\d{4}-\d{2}-\d{2})/.exec(slug);
   if (dMatch) date = dMatch[1];
 
-  const h1Match = /^# Agent Note[^:：]*[:：]\s*(.*)$/m.exec(raw);
+  const h1Match = /^# Agent Note[^:：]*[:：]\s*(.*)$/m.exec(parseable);
   if (h1Match) title = h1Match[1].trim();
 
   function extractSection(secNamePattern: string) {
     const re = new RegExp(`^## (?:${secNamePattern})\\s*\\n+([\\s\\S]*?)(?=^## |\\s*$)`, 'm');
-    const m = re.exec(raw);
+    const m = re.exec(parseable);
     return m ? m[1].trim() : '';
   }
 
@@ -92,7 +109,7 @@ function parseNoteContent(raw: string, relPath: string, slugToId: Map<string, st
   const consequences = extractSection('Consequences|后果');
 
   const links: string[] = [];
-  for (const m of raw.matchAll(/\]\(([^)]+\.md)\)/g)) {
+  for (const m of parseable.matchAll(/\]\(([^)]+\.md)\)/g)) {
     let targetHref = m[1].split('#')[0].trim();
     if (targetHref.includes('://')) continue;
     targetHref = targetHref.replace(/\.zh\.md$/, '.md');

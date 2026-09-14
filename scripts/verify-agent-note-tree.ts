@@ -3,7 +3,7 @@
  * Run: npx tsx scripts/verify-agent-note-tree.ts
  */
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, resolve, sep } from "node:path";
 import { agentNoteRoot, walkAgentNoteTree } from "./agent-note-tree.ts";
 
 const { notes, errors } = walkAgentNoteTree();
@@ -31,8 +31,9 @@ for (const note of notes) {
 
     const resolvedTarget = resolve(dirname(noteFullPath), fileTarget);
 
-    // Only verify internal links within agentNoteRoot
-    if (!resolvedTarget.startsWith(agentNoteRoot)) {
+    // Only verify internal links within agentNoteRoot (boundary-aware: a
+    // sibling like .agents/notes-backup/ must not prefix-match)
+    if (!resolvedTarget.startsWith(agentNoteRoot + sep)) {
       continue;
     }
 

@@ -7,15 +7,6 @@ import { resolve, sep } from 'node:path'
 
 function resolveAgentNoteRoot(): string {
   if (process.env.AGENT_NOTE_ROOT) return resolve(process.env.AGENT_NOTE_ROOT)
-  // walk up from cwd to find .agents/notes, fallback to cwd/.agents/notes
-  let cur = process.cwd()
-  for (let i = 0; i < 6; i++) {
-    const cand = resolve(cur, '.agents/notes')
-    if (existsSync(cand)) return cand
-    const parent = resolve(cur, '..')
-    if (parent === cur) break
-    cur = parent
-  }
   return resolve(process.cwd(), '.agents/notes')
 }
 

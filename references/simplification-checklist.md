@@ -1,6 +1,6 @@
 # 按需阅读：简化机会自检
 
-> 提炼自 `dsh-find-simplifications` 的可搬运部分。收尾或重构时扫一遍；别在功能改动里硬塞无关简化。
+> 提炼自 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的 `dsh-find-simplifications` skill。收尾或重构时扫一遍；别在功能改动里硬塞无关简化。
 
 ## 值得删/合/降级的信号
 

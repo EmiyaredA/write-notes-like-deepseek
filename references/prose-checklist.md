@@ -1,10 +1,11 @@
 # 按需阅读：Notes 行文与去泄露自检
 
-> 提炼自 `dsh-prose-standard` 与 `dsh-trim-cot-leakage` 的可搬运部分。写/改 Note 时对照此清单；只改代码不动 Note 时跳过。
+> 提炼自 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 仓库内 `dsh-prose-standard` 与 `dsh-trim-cot-leakage` 两个 skill 的可搬运部分。写/改 Note 时对照此清单；只改代码不动 Note 时跳过。
 
 ## 原则
 
 - 只写代码说不清的：行为、失败、时序、所有权、后果与取舍。别复述代码或推导过程。
+- 不变量能编进类型、可见性或 API 报错的，别只写在笔记里。
 - 说人话，点名谁做了什么、在什么条件下、会怎样；少用“契约/边界/形态”等抽象词，除非指的就是该技术主体。
 - 一个事实只在一处讲透，其余链过去；别把同一规则抄得到处都是。
 - 写完自问：这段话不看实现能独立成立吗？不看当时聊天，现在的读者能验证吗？
@@ -30,7 +31,7 @@
 常见泄露（命中即改）：
 
 1. 死引用：`(decision 7)`/`(audit C2)`/`§N`/`plan §1.4` — 改为对已提交 Note/文档的具名路径引用，无主则删引用、重述事实。
-2. 栈/PR 视角：`后续 PR`/`本 PR 新增`/`上一 commit` — 改为已落地的机制或扩展点；未做事项用 `TODO` 或 issue 引用。
+2. 栈/PR 视角：`后续 PR`/`本 PR 新增`/`上一 commit` — 改为已落地的机制或扩展点；未做事项用 `TODO` 或 issue 引用，或收进 `## Deferred` 小节。
 3. 变更叙事：`used to`/`不再`/`旧 X`/`this cut`/`now` — 改为现在时；回归用现在时反事实“若无 X 则 Y”。
 4. 评审编排：`评审时否掉`/`reviewer 确认`/`v5` — 只留决定与理由，删谁说的、何时说的。
 5. 自证正确：`这样转是安全的，因为…` — 改为使之安全的 invariant，或直接删（代码已自明）。
@@ -38,7 +39,7 @@
 7. 含糊与占位：`应该够了`/`probably fine` — 升为 `TODO/FIXME` 或明确边界。
 8. 语言串台：中英混杂的工作语言片段 — 翻译或删除。
 
-**不算泄露（保留）：** issue 引用 `#1470`/`TODO(name):`、Agent Note 与 postmortem 内的已合并 PR 引用、suppression 理由、现在时反事实、带实测值的边界、运行时 old/new 状态、已提交文档的 `§` 编号。
+**不算泄露（保留）：** issue 引用 `#1470`/`TODO(name):`（裸 `TODO` 注意正文扫描，见上条豁免）、Agent Note 与 postmortem 内的已合并 PR 引用、suppression 理由、现在时反事实、带实测值的边界、运行时 old/new 状态、已提交文档的 `§` 编号。
 
 ## 删过头警示（overcorrection traps，来自 trim-cot-leakage）
 

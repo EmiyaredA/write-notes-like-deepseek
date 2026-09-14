@@ -1,20 +1,20 @@
 /**
  * Enforce Agent Note headers, lifecycle-specific sections, alternatives.
+ * Implemented notes may not carry proposal-era H2s; present tense in the
+ * body is a prose rule, not a lexical scan.
  * Run: npx tsx scripts/verify-agent-note-format.ts
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { agentNoteRoot, walkAgentNoteTree } from "./agent-note-tree.ts";
 
-const FORMAT_ADOPTED = "2026-07-05";
-const GRANDFATHER = "<!-- agent-note-format: alternatives-not-recorded (pre-format Agent Note) -->";
-const LEGACY_MARKERS = ["XXX: legacy ADR/RFC body format", "XXX: legacy ADR/Agent Note body format"];
-
 const STATUS: Record<string, RegExp> = {
   proposed: /^Status: proposed$/,
   implemented: /^Status: implemented$/,
   rejected: /^Status: rejected — .+$/,
 };
+
+const PROBLEM_FIRST = ["## Problem", "## 问题"];
 
 const REQUIRED: Record<string, string[][]> = {
   proposed: [
@@ -31,60 +31,115 @@ const REQUIRED: Record<string, string[][]> = {
   ],
 };
 
-const BANNED_IMPLEMENTED = /^## (?:Proposal\b|Plan\b|Migration plan\b|Acceptance criteria\b|计划\b|规划\b)/i;
+const BANNED_IMPLEMENTED = new Set([
+  "## proposal", "## plan", "## migration plan", "## acceptance criteria",
+  "## 提议", "## 方案", "## 提案",
+  "## 计划", "## 规划", "## 迁移计划",
+  "## 验收标准", "## 验收条件", "## 接受标准",
+]);
+
+const ALTERNATIVES_RE = /^## (?:Alternatives considered|.{0,8}?(?:替代方案|备选方案))$/;
+
+/** Strip trailing parenthetical: `## Decision（说明）` → `## Decision`. */
+function headingBase(h: string): string {
+  return h.replace(/[（(].*$/, "").trimEnd();
+}
+
+interface MaskedSource {
+  lines: string[];
+  /** line indexes inside fenced code blocks */
+  fenced: boolean[];
+  /** line indexes inside HTML comments */
+  commented: boolean[];
+}
+
+/** Normalize BOM/CRLF, then mask fenced code and HTML comment regions. */
+function maskSource(raw: string): MaskedSource {
+  const normalized = raw.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+  const lines = normalized.split("\n");
+  const fenced = new Array<boolean>(lines.length).fill(false);
+  const commented = new Array<boolean>(lines.length).fill(false);
+  let inFence = false;
+  let inComment = false;
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    fenced[i] = inFence;
+    commented[i] = inComment;
+    // A fence opens/closes only on its own line (≤3 leading spaces); fence
+    // mentions inside inline code or prose never toggle state.
+    if (!inComment && /^\s{0,3}```/.test(l)) {
+      fenced[i] = true;
+      inFence = !inFence;
+    } else if (inFence) {
+      fenced[i] = true;
+    }
+    // Fence interiors are opaque: a `<!--` in a HTML/JSX sample must not
+    // leak the comment mask past the closing fence.
+    if (inFence) continue;
+    const openIdx = inComment ? -1 : l.indexOf("<!--");
+    const closeIdx = l.indexOf("-->");
+    if (inComment) {
+      commented[i] = true;
+      if (closeIdx !== -1) inComment = false;
+    } else if (openIdx !== -1) {
+      commented[i] = true;
+      if (closeIdx === -1 || closeIdx < openIdx) inComment = true;
+    }
+  }
+  return { lines, fenced, commented };
+}
+
+function isProseLine(src: MaskedSource, i: number): boolean {
+  if (src.fenced[i] || src.commented[i]) return false;
+  return !/^\s*>/.test(src.lines[i]);
+}
 
 const { notes, errors } = walkAgentNoteTree();
 
 for (const note of notes) {
   const fail = (msg: string) => { errors.push(`format: ${note.rel} — ${msg}`); };
-  const raw = readFileSync(resolve(agentNoteRoot, note.rel), "utf8");
-  const lines = raw.split("\n");
-  let inFence = false;
-  const prose = lines.filter((l: string) => {
-    if (l.startsWith("```")) { inFence = !inFence; return false; }
-    return !inFence;
-  });
+  const src = maskSource(readFileSync(resolve(agentNoteRoot, note.rel), "utf8"));
+  const { lines } = src;
+  const proseIdx: number[] = [];
+  for (let i = 0; i < lines.length; i++) if (isProseLine(src, i)) proseIdx.push(i);
+  const prose = proseIdx.map((i) => lines[i]);
 
-  if (!/^# Agent Note: \S/.test(lines[0] ?? "")) fail("line 1 must be `# Agent Note: <title>`");
+  // Halfwidth or fullwidth colon (IME often inserts ：)
+  if (!/^# Agent Note[:：] ?\S/.test(lines[0] ?? "")) fail("line 1 must be `# Agent Note: <title>`");
   if (lines[1] !== "") fail("line 2 must be blank");
 
   const re = STATUS[note.lifecycle];
   if (re && !re.test(lines[2] ?? "")) fail(`line 3 must match ${note.lifecycle} status grammar (${String(re)})`);
   if (lines[3] !== "") fail("line 4 must be blank");
 
-  // single Status line
-  const statusCount = prose.filter((l: string) => l.startsWith("Status:")).length;
+  // single Status line (fences, quotes and comments immune). Match strict
+  // status-shaped lines only — body prose like "Status: 200 means OK" must
+  // not be miscounted as a duplicate status header.
+  const looksLikeStatusLine = (l: string) => {
+    const t = l.trim();
+    return t === "Status: proposed" || t === "Status: implemented" || /^Status: rejected — .+$/.test(t);
+  };
+  const statusCount = prose.filter(looksLikeStatusLine).length;
   if (statusCount !== 1) fail("Status: line must appear exactly once");
 
   const h2s = prose.filter((l: string) => l.startsWith("## ")).map((l: string) => l.trimEnd());
-  if (h2s[0] !== "## Problem" && h2s[0] !== "## 问题") {
+  const bases = h2s.map(headingBase);
+  if (!PROBLEM_FIRST.includes(headingBase(h2s[0] ?? ""))) {
     fail(`first section must be ## Problem or ## 问题 (got ${JSON.stringify(h2s[0] ?? "<none>")})`);
   }
 
   for (const group of REQUIRED[note.lifecycle] ?? []) {
-    const matched = group.some((h: string) => h2s.some((item: string) => item.startsWith(h)));
-    if (!matched) fail(`missing one of ${JSON.stringify(group)}`);
+    if (!group.some((h: string) => bases.includes(h))) fail(`missing one of ${JSON.stringify(group)}`);
   }
 
   if (note.lifecycle === "implemented") {
-    for (const h of h2s.filter((x: string) => BANNED_IMPLEMENTED.test(x))) {
+    for (const h of bases.filter((x: string) => BANNED_IMPLEMENTED.has(x.toLowerCase()))) {
       fail(`banned in implemented: ${h}`);
     }
   }
 
-  const hasAlt = h2s.some((h: string) =>
-    h.includes("Alternatives") ||
-    h.includes("备选") ||
-    h.includes("替代") ||
-    h.includes("取舍")
-  );
-  const hasGrandfather = prose.includes(GRANDFATHER);
-  if (hasAlt && hasGrandfather) fail("has both Alternatives section and grandfather comment — drop the comment");
-  if (!hasAlt && !hasGrandfather && note.date >= FORMAT_ADOPTED) {
-    fail("missing ## Alternatives considered / ## 考虑过的备选方案");
-  }
-  if (prose.some((l: string) => LEGACY_MARKERS.some((m: string) => l.includes(m)))) {
-    fail("retired legacy-format debt marker");
+  if (!bases.some((h: string) => ALTERNATIVES_RE.test(h))) {
+    fail("missing ## Alternatives considered / ## 备选方案");
   }
 }
 

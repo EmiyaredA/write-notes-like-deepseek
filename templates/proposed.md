@@ -2,6 +2,14 @@
 
 Status: proposed
 
+<!--
+  【维护提醒】
+  1. 落地转 implemented 时的重写契约：## Proposal 改为现在时的 ## Decision；
+     ## Acceptance criteria / ## Risks 折进 ## Consequences（或现在时的 ## Testing / ## Verification）。
+  2. 前提消失或不再推进 → 转 Status: rejected — <原因>，严禁归档 proposed。
+  3. Alternatives 必填：只记录真实考虑过的对手方案；「不做/复用」仅当当时真的权衡过才写。
+-->
+
 ## Problem
 
 <动机，脱离方案也能独立成立；写清背景、约束与失败条件>
@@ -12,9 +20,7 @@ Status: proposed
 
 ## Alternatives considered
 
-必填。先确认"不做/复用"这一档（若可行，解释为何最终仍要新建）：
-- 不建 / YAGNI——留给现有实现的取舍
-- 复用仓库已有 helper/pattern、标准库、平台原生、已装依赖
+必填。只写当时真的权衡过的选项（没有过的不要编）。「不做 / 复用现状」可以是其中一档，但不是必填档。
 
 每档一个候选，或 `### Why not <X>?` 子节：
 
