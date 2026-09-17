@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { execSync } from 'node:child_process';
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, resolve, relative, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -76,5 +77,10 @@ for (const topDoc of ['README.zh.md', 'README.md', 'AGENTS.md']) {
     writeFileSync(join(targetNotesDir, topDoc === 'README.zh.md' ? 'README.md' : topDoc), topContent, 'utf8');
   }
 }
+
+// 自动更新归档 Note 密封清单
+try {
+  execSync('npx tsx scripts/verify-archived-agent-notes.ts --write', { stdio: 'ignore' });
+} catch {}
 
 console.log(`✅ 成功将 ${copied} 篇中文 Note 标准化写入到: ${targetNotesDir}`);

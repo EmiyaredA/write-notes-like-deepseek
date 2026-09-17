@@ -9,9 +9,9 @@ import { resolve } from "node:path";
 import { agentNoteRoot, walkAgentNoteTree } from "./agent-note-tree.ts";
 
 const STATUS: Record<string, RegExp> = {
-  proposed: /^Status: proposed$/,
-  implemented: /^Status: implemented$/,
-  rejected: /^Status: rejected — .+$/,
+  proposed: /^Status: proposed$|^状态[:：] ?已提议$/,
+  implemented: /^Status: implemented$|^状态[:：] ?已实现$/,
+  rejected: /^Status: rejected — .+$|^状态[:：] ?已否决 — .+$/,
 };
 
 const PROBLEM_FIRST = ["## Problem", "## 问题"];
@@ -24,7 +24,7 @@ const REQUIRED: Record<string, string[][]> = {
   ],
   implemented: [
     ["## Decision", "## 决定", "## 决策"],
-    ["## Consequences", "## 后果", "## 影响", "## 结果"],
+    ["## Consequences", "## 后果", "## 影响", "## 结果", "## 结果与代价"],
   ],
   rejected: [
     ["## Proposal", "## 提议", "## 方案", "## 提案"],
@@ -39,6 +39,8 @@ const BANNED_IMPLEMENTED = new Set([
 ]);
 
 const ALTERNATIVES_RE = /^## (?:Alternatives considered|.{0,8}?(?:替代方案|备选方案))$/;
+const FORMAT_ADOPTED = "2026-07-05";
+const GRANDFATHER = "<!-- agent-note-format: alternatives-not-recorded (pre-format Agent Note) -->";
 
 /** Strip trailing parenthetical: `## Decision（说明）` → `## Decision`. */
 function headingBase(h: string): string {
@@ -117,7 +119,7 @@ for (const note of notes) {
   // not be miscounted as a duplicate status header.
   const looksLikeStatusLine = (l: string) => {
     const t = l.trim();
-    return t === "Status: proposed" || t === "Status: implemented" || /^Status: rejected — .+$/.test(t);
+    return Object.values(STATUS).some((re) => re.test(t));
   };
   const statusCount = prose.filter(looksLikeStatusLine).length;
   if (statusCount !== 1) fail("Status: line must appear exactly once");
@@ -138,9 +140,14 @@ for (const note of notes) {
     }
   }
 
-  if (!bases.some((h: string) => ALTERNATIVES_RE.test(h))) {
+  const hasSection = bases.some((h: string) => ALTERNATIVES_RE.test(h));
+  const rawText = readFileSync(resolve(agentNoteRoot, note.rel), "utf8");
+  const hasGrandfather = rawText.includes(GRANDFATHER);
+  if (hasSection && hasGrandfather) fail("carries both ## Alternatives considered and grandfather comment — drop the comment");
+  if (!hasSection && !hasGrandfather) {
     fail("missing ## Alternatives considered / ## 备选方案");
   }
+  if (hasGrandfather && note.date >= FORMAT_ADOPTED) fail(`grandfather comment only valid before ${FORMAT_ADOPTED}`);
 }
 
 if (errors.length) {
